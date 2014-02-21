@@ -89,7 +89,11 @@ public class MainActivity extends Activity implements OnClickListener {
 		// TODO Auto-generated method stub
 		Editor ed = sp.edit();
 		ed.putString("account", account);
-		ed.putString("passwd", passwd);
+		if(rember){
+			ed.putString("passwd", passwd);
+		}else{
+			ed.putString("passwd", "");
+		}
 		ed.putBoolean("rember", rember);
 		ed.commit();
 		super.onDestroy();
