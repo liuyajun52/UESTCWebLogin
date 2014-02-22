@@ -9,6 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.List;
 import java.util.Map;
 
 import com.blacklighting.uestcweblogin.MainActivity;
@@ -24,7 +25,7 @@ public class LogThread extends Thread {
 	private Map<String, String> params;
 	Handler mHandler;
 	final String testUrl = "http://baidu.com";
-	final String testHostName = "www.baidu.com";
+	final String testHostServer = "DRCOM-IIS-YanDaDa/2.00";
 	boolean usingPost;
 
 	public LogThread(String url, Map<String, String> params, Handler mHandler,
@@ -41,7 +42,7 @@ public class LogThread extends Thread {
 		super.run();
 		if (usingPost) {
 			try {
-				if (testInternetAccess(testUrl, testHostName)) {
+				if (testInternetAccess(testUrl, testHostServer)) {
 					mHandler.sendEmptyMessage(MainActivity.ALREADY_LOGIN);
 					return;
 				} else {
@@ -65,7 +66,7 @@ public class LogThread extends Thread {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					} finally {
-						if (testInternetAccess(testUrl, testHostName)) {
+						if (testInternetAccess(testUrl, testHostServer)) {
 							mHandler.sendEmptyMessage(MainActivity.LOGIN_SUCCESS);
 						} else {
 							mHandler.sendEmptyMessage(MainActivity.PASSWD_ERROR);
@@ -82,7 +83,7 @@ public class LogThread extends Thread {
 			}
 		} else {
 			try {
-				if (!testInternetAccess(testUrl, testHostName)) {
+				if (!testInternetAccess(testUrl, testHostServer)) {
 					mHandler.sendEmptyMessage(MainActivity.ALREADY_LOGIN);
 					return;
 				} else {
@@ -106,7 +107,7 @@ public class LogThread extends Thread {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					} finally {
-						if (!testInternetAccess(testUrl, testHostName)) {
+						if (!testInternetAccess(testUrl, testHostServer)) {
 							mHandler.sendEmptyMessage(MainActivity.LOGOUT_SUCCESS);
 						} else {
 							mHandler.sendEmptyMessage(MainActivity.PASSWD_ERROR);
@@ -133,15 +134,22 @@ public class LogThread extends Thread {
 	 * @throws MalformedURLException
 	 * @throws IOException
 	 */
-	private boolean testInternetAccess(String testUrl, String hostName)
+	private boolean testInternetAccess(String testUrl, String server)
 			throws MalformedURLException, IOException {
 		HttpURLConnection conn = null;
 		conn = (HttpURLConnection) new URL(testUrl).openConnection();
 		conn.setConnectTimeout(5000);
+		conn.setRequestProperty(
+				"User-Agent",
+				"Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.117 Safari/537.36");
+		conn.setRequestProperty("Host", "www.baidu.com");
+
 		int returncode = conn.getResponseCode();
-		String host = conn.getHeaderField("host");
+		Map<String, List<String>> m = conn.getHeaderFields();
+		String headerServer = conn.getHeaderField("Server");
 		conn.disconnect();
-		return returncode == HttpURLConnection.HTTP_OK && host!=null&&host.equals(hostName);
+		return (returncode == HttpURLConnection.HTTP_OK && (headerServer == null || !headerServer
+				.equals(server)));
 	}
 
 	/**
