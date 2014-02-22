@@ -24,6 +24,7 @@ public class LogThread extends Thread {
 	private Map<String, String> params;
 	Handler mHandler;
 	final String testUrl = "http://baidu.com";
+	final String testHostName = "www.baidu.com";
 	boolean usingPost;
 
 	public LogThread(String url, Map<String, String> params, Handler mHandler,
@@ -40,7 +41,7 @@ public class LogThread extends Thread {
 		super.run();
 		if (usingPost) {
 			try {
-				if (testInternetAccess(testUrl)) {
+				if (testInternetAccess(testUrl, testHostName)) {
 					mHandler.sendEmptyMessage(MainActivity.ALREADY_LOGIN);
 					return;
 				} else {
@@ -64,7 +65,7 @@ public class LogThread extends Thread {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					} finally {
-						if (testInternetAccess(testUrl)) {
+						if (testInternetAccess(testUrl, testHostName)) {
 							mHandler.sendEmptyMessage(MainActivity.LOGIN_SUCCESS);
 						} else {
 							mHandler.sendEmptyMessage(MainActivity.PASSWD_ERROR);
@@ -81,7 +82,7 @@ public class LogThread extends Thread {
 			}
 		} else {
 			try {
-				if (!testInternetAccess(testUrl)) {
+				if (!testInternetAccess(testUrl, testHostName)) {
 					mHandler.sendEmptyMessage(MainActivity.ALREADY_LOGIN);
 					return;
 				} else {
@@ -105,7 +106,7 @@ public class LogThread extends Thread {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					} finally {
-						if (!testInternetAccess(testUrl)) {
+						if (!testInternetAccess(testUrl, testHostName)) {
 							mHandler.sendEmptyMessage(MainActivity.LOGOUT_SUCCESS);
 						} else {
 							mHandler.sendEmptyMessage(MainActivity.PASSWD_ERROR);
@@ -132,14 +133,15 @@ public class LogThread extends Thread {
 	 * @throws MalformedURLException
 	 * @throws IOException
 	 */
-	private boolean testInternetAccess(String testUrl)
+	private boolean testInternetAccess(String testUrl, String hostName)
 			throws MalformedURLException, IOException {
 		HttpURLConnection conn = null;
 		conn = (HttpURLConnection) new URL(testUrl).openConnection();
 		conn.setConnectTimeout(5000);
 		int returncode = conn.getResponseCode();
+		String host = conn.getHeaderField("host");
 		conn.disconnect();
-		return returncode == HttpURLConnection.HTTP_OK;
+		return returncode == HttpURLConnection.HTTP_OK && host.equals(hostName);
 	}
 
 	/**
