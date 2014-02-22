@@ -141,7 +141,7 @@ public class LogThread extends Thread {
 		int returncode = conn.getResponseCode();
 		String host = conn.getHeaderField("host");
 		conn.disconnect();
-		return returncode == HttpURLConnection.HTTP_OK && host.equals(hostName);
+		return returncode == HttpURLConnection.HTTP_OK && host!=null&&host.equals(hostName);
 	}
 
 	/**

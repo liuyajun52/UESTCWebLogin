@@ -23,6 +23,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 public class MainActivity extends Activity implements OnClickListener {
@@ -35,10 +36,12 @@ public class MainActivity extends Activity implements OnClickListener {
 	EditText accoutEditText, passwdEditText;
 	Button loginButton, logoutButton;
 	CheckBox remberCheckBox;
+	ProgressBar progressBar;
 	private String account, passwd;
 	MHandler mHandler = new MHandler(this);
 	SharedPreferences sp;
 	boolean rember;
+	LogThread loginThread, logoutThread;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +54,7 @@ public class MainActivity extends Activity implements OnClickListener {
 		loginButton = (Button) findViewById(R.id.loginButton);
 		logoutButton = (Button) findViewById(R.id.logoutButton);
 		remberCheckBox = (CheckBox) findViewById(R.id.remberCheckBox);
+		progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
 		// 为按钮绑定监听器
 		loginButton.setOnClickListener(this);
@@ -89,9 +93,9 @@ public class MainActivity extends Activity implements OnClickListener {
 		// TODO Auto-generated method stub
 		Editor ed = sp.edit();
 		ed.putString("account", account);
-		if(rember){
+		if (rember) {
 			ed.putString("passwd", passwd);
-		}else{
+		} else {
 			ed.putString("passwd", "");
 		}
 		ed.putBoolean("rember", rember);
@@ -136,8 +140,14 @@ public class MainActivity extends Activity implements OnClickListener {
 			params.put("Submit", "Login/登陆");
 
 			// 开始登录
-			new LogThread(loginUrl, params, mHandler, true).start();
-
+			if (loginThread == null || !loginThread.isAlive()) {
+				loginThread = new LogThread(loginUrl, params, mHandler, true);
+				loginThread.start();
+				progressBar.setVisibility(View.VISIBLE);
+			} else {
+				Toast.makeText(MainActivity.this, "请等待当前登录进程结束",
+						Toast.LENGTH_SHORT).show();
+			}
 			break;
 		case R.id.logoutButton:
 			account = accoutEditText.getText().toString();
@@ -150,8 +160,14 @@ public class MainActivity extends Activity implements OnClickListener {
 			params2.put("Submit2", "Logout/注销");
 
 			// 开始注销
-			// 开始登录
-			new LogThread(loginUrl, params2, mHandler, false).start();
+			if (logoutThread == null || !logoutThread.isAlive()) {
+				logoutThread = new LogThread(loginUrl, params2, mHandler, false);
+				logoutThread.start();
+				progressBar.setVisibility(View.VISIBLE);
+			} else {
+				Toast.makeText(MainActivity.this, "请等待当前注销进程结束",
+						Toast.LENGTH_SHORT).show();
+			}
 			break;
 		default:
 			break;
@@ -186,7 +202,11 @@ public class MainActivity extends Activity implements OnClickListener {
 			case LOGOUT_SUCCESS:
 				Toast.makeText(act.get(), "注销成功", Toast.LENGTH_SHORT).show();
 				break;
+			case PASSWD_ERROR:
+				Toast.makeText(act.get(), "密码错误", Toast.LENGTH_SHORT).show();
+				break;
 			}
+			act.get().progressBar.setVisibility(View.GONE);
 		}
 
 	}
